@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="/robot_description" command="$(find xacro)/xacro '$(find argo_tracker_description)/urdf/argo_tracker_default.urdf.xacro'" />
+  <param name="/robot_description_semantic" textfile="$(find argo_tracker_robot_moveit_config)/config/taurob_tracker.srdf" />
+  
+  <rosparam command="load" file="$(find argo_tracker_robot_moveit_config)/config/kinematics.yaml" ns="/robot_description_kinematics" />
+  <rosparam command="load" file="$(find argo_tracker_robot_moveit_config)/config/kinematics.yaml" ns="/argo_tracker_inverse_kinematics_benchmark" />
+
+  <node name="argo_tracker_inverse_kinematics_benchmark" pkg="moveit_kinematics_plugin_benchmark" type="inverse_kinematics_benchmark_node" output="screen">
+    <param name="num_samples" value="1000"/>
+    <rosparam subst_value="true">
+        groups:
+         #- arm_group
+         #- arm_with_head_group
+         - arm_with_gripper_group_trac
+         - arm_with_gripper_group_ceres
+    </rosparam>
+  </node>
+</launch>
