@@ -10,6 +10,21 @@
 #include <boost/date_time.hpp>
 
 namespace moveit_kinematics_plugin_benchmark {
+  template<typename T>
+  std::string vecToString(const std::vector<T>& vec) {
+    std::stringstream ss;
+    ss << "[";
+    for (unsigned int i = 0; i < vec.size(); ++i) {
+      ss << vec[i];
+      if (i != vec.size() -1) {
+        ss << ", ";
+      }
+    }
+    ss << "]";
+    return ss.str();
+  }
+
+
   struct BenchmarkResult {
     std::string group_name;
     double total_time; // seconds
@@ -28,7 +43,10 @@ namespace moveit_kinematics_plugin_benchmark {
   class InverseKinematicsBenchmark {
   public:
     InverseKinematicsBenchmark();
-    bool generateRandomStates(std::string group_name);
+    bool generateCenterSeedState(std::string group_name);
+    bool generateRandomStates(std::string group_name, int num_samples);
+    void addSampleState(const std::vector<double> joint_state);
+
     bool runBenchmark(std::string group_name, BenchmarkResult& result);
   private:
     ros::NodeHandle nh_;
@@ -38,10 +56,7 @@ namespace moveit_kinematics_plugin_benchmark {
     robot_state::RobotStatePtr robot_state_;
 
     std::vector<double> seed_state_;
-    std::vector<std::vector<double>> random_states_;
-
-    // configuration
-    int num_samples_;
+    std::vector<std::vector<double>> sample_states_;
   };
 }
 
