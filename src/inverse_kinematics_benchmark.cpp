@@ -44,12 +44,17 @@ bool InverseKinematicsBenchmark::generateRandomStates(std::string group_name, in
   robot_model::JointBoundsVector bounds = joint_model_group->getActiveJointModelsBounds();
   sample_states_.resize(num_samples);
   for (unsigned int i = 0; i < sample_states_.size(); i++) {
-    sample_states_[i].resize(joint_model_group->getActiveJointModels().size());
-    for (unsigned int j = 0; j < sample_states_[i].size(); j++) {
-      sample_states_[i][j] = fRand((*bounds[j])[0].min_position_, (*bounds[j])[0].max_position_);
-    }
+    sample_states_[i] = getRandomState(bounds);
   }
   return true;
+}
+
+std::vector<double> InverseKinematicsBenchmark::getRandomState(const robot_model::JointBoundsVector& bounds) {
+  std::vector<double> random_state(bounds.size());
+  for (unsigned int j = 0; j < random_state.size(); j++) {
+    random_state[j] = fRand((*bounds[j])[0].min_position_, (*bounds[j])[0].max_position_);
+  }
+  return random_state;
 }
 
 void InverseKinematicsBenchmark::addSampleState(const std::vector<double> joint_state) {
@@ -76,7 +81,6 @@ bool InverseKinematicsBenchmark::runBenchmark(std::string group_name, BenchmarkR
     return false;
   }
   std::string tip_frame = solver->getTipFrame();
-
   robot_model::JointBoundsVector bounds = joint_model_group->getActiveJointModelsBounds();
 
   // Debug output
@@ -96,6 +100,7 @@ bool InverseKinematicsBenchmark::runBenchmark(std::string group_name, BenchmarkR
   double total_time = 0;
   int found_solutions = 0;
   for (unsigned int i = 0; i < sample_states_.size(); i++) {
+    ROS_INFO_STREAM("Sample: " << i);
     ROS_INFO_STREAM("Sample state: " << vecToString(sample_states_[i]));
     std::vector<geometry_msgs::Pose> target_poses;
     solver->getPositionFK(solver->getTipFrames(), sample_states_[i], target_poses);
@@ -104,18 +109,29 @@ bool InverseKinematicsBenchmark::runBenchmark(std::string group_name, BenchmarkR
     std::vector<double> solution;
     moveit_msgs::MoveItErrorCodes error_code;
     bool result = solver->getPositionIK(target_poses[0], seed_state_, solution, error_code);
-    ROS_INFO_STREAM("Solution: " << vecToString(solution));
-    time_diff = boost::posix_time::microsec_clock::local_time() - start_time;
-    total_time += time_diff.total_nanoseconds() / 1e9;
+
 
     ROS_INFO_STREAM("Time: " << time_diff.total_nanoseconds() / 1e6 << " ms");
 
+    int max_tries = 3;
+    int current_try = 0;
+    while (!result && current_try < max_tries) {
+      std::vector<double> random_seed = getRandomState(bounds);
+      ROS_INFO_STREAM("Retrying with random seed: " << vecToString(random_seed));
+      result = solver->getPositionIK(target_poses[0], random_seed, solution, error_code);
+      current_try++;
+    }
+//    ROS_INFO_STREAM("Solution: " << vecToString(solution));
+    time_diff = boost::posix_time::microsec_clock::local_time() - start_time;
+    total_time += time_diff.total_nanoseconds() / 1e9;
+
     if (result) {
       found_solutions++;
-      ROS_INFO_STREAM("Success");
+      ROS_INFO_STREAM("Success on try " << current_try);
     } else {
       ROS_INFO_STREAM("Failure");
     }
+    ROS_INFO_STREAM("-------------------------------------");
   }
 
   result.group_name = group_name;
@@ -124,10 +140,5 @@ bool InverseKinematicsBenchmark::runBenchmark(std::string group_name, BenchmarkR
   result.total_time = total_time;
   return true;
 }
-
-std::vector<double> generateRandomJointState(const robot_model::JointModelGroup* joint_model_group) {
-
-}
-
 
 }

@@ -7,7 +7,7 @@
   <rosparam command="load" file="$(find argo_tracker_robot_moveit_config)/config/kinematics.yaml" ns="/argo_tracker_inverse_kinematics_benchmark" />
 
   <node name="argo_tracker_inverse_kinematics_benchmark" pkg="moveit_kinematics_plugin_benchmark" type="inverse_kinematics_benchmark_node" output="screen">
-    <param name="random_samples" value="false"/>
+    <param name="random_samples" value="true"/>
     <param name="num_random_samples" value="1000"/>
     <rosparam subst_value="true">
       groups:
@@ -16,7 +16,7 @@
         - arm_with_gripper_group_trac
         - arm_with_gripper_group_ceres
       sample_states:
-        - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]        
+        - [0.627938, 1.23032, 4.59099, 2.55584, 2.40853, -1.90034]        
     </rosparam>
   </node>
 </launch>

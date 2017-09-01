@@ -45,6 +45,7 @@ namespace moveit_kinematics_plugin_benchmark {
     InverseKinematicsBenchmark();
     bool generateCenterSeedState(std::string group_name);
     bool generateRandomStates(std::string group_name, int num_samples);
+    std::vector<double> getRandomState(const robot_model::JointBoundsVector& bounds);
     void addSampleState(const std::vector<double> joint_state);
 
     bool runBenchmark(std::string group_name, BenchmarkResult& result);
